@@ -21,15 +21,14 @@ app.add_middleware(
         "http://localhost:3000", 
         "http://localhost:3001", 
         "http://localhost:8080",
-        "https://wealth-watch-blush.vercel.app",
-        "https://wealth-watch-iov7doq40-jiahongcs-projects.vercel.app",
-        "https://wealth-watch.vercel.app",
-        "https://wealth-watch-*.vercel.app"
+        "https://wealth-watch-j35r7h3or-jiahongcs-projects.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# NOTE: All live market data is now provided by yfinance (Yahoo Finance). Alpha Vantage is no longer used or referenced in this backend.
 
 # Security
 security = HTTPBearer()

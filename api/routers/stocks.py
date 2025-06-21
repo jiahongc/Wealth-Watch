@@ -12,8 +12,7 @@ import pandas as pd
 
 router = APIRouter()
 
-# Alpha Vantage API key
-ALPHA_VANTAGE_API_KEY = os.getenv('ALPHA_VANTAGE_API_KEY', 'T695EA0D7EGRZ11H')
+# NOTE: All live market data is now provided by yfinance (Yahoo Finance). Alpha Vantage is no longer used or referenced in this backend.
 
 class StockSymbol(BaseModel):
     symbol: str
@@ -52,73 +51,30 @@ class StockHolding(BaseModel):
 
 @router.get("/quote/{symbol}")
 async def get_stock_quote(symbol: str) -> StockData:
-    """Get real-time stock quote using Alpha Vantage or Yahoo Finance fallback"""
+    """Get real-time stock quote using Yahoo Finance (yfinance)"""
     try:
-        # Try Alpha Vantage first
-        url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol.upper()}&apikey={ALPHA_VANTAGE_API_KEY}"
-        response = requests.get(url)
-        data = response.json()
-        
-        print(f"Alpha Vantage API response for {symbol}: {data}")
-        
-        # Check for rate limit or API key issues
-        if "Information" in data:
-            print(f"Alpha Vantage API limit reached: {data['Information']}")
-            # Fallback to Yahoo Finance API
-            return await get_stock_quote_yahoo(symbol)
-        
-        if "Error Message" in data:
-            raise HTTPException(status_code=404, detail="Stock symbol not found")
-        
-        quote = data.get("Global Quote", {})
-        if not quote:
-            raise HTTPException(status_code=404, detail="Stock symbol not found")
-        
-        current_price = float(quote.get("05. price", 0))
-        change = float(quote.get("09. change", 0))
-        change_percent = float(quote.get("10. change percent", "0%").replace("%", ""))
-        volume = int(quote.get("06. volume", 0))
-        
-        return StockData(
-            symbol=symbol.upper(),
-            name=symbol.upper(),  # Alpha Vantage doesn't provide company names in GLOBAL_QUOTE
-            price=round(current_price, 2),
-            change=round(change, 2),
-            change_percent=round(change_percent, 2),
-            volume=volume,
-            last_updated=datetime.now()
-        )
+        return await get_stock_quote_yahoo(symbol)
     except Exception as e:
-        print(f"Error fetching stock data for {symbol}: {e}")
-        # Try Yahoo Finance as fallback
-        try:
-            return await get_stock_quote_yahoo(symbol)
-        except:
-            # Final fallback to mock data
-            return get_mock_stock_data(symbol)
+        print(f"Error fetching stock data for {symbol} from yfinance: {e}")
+        return get_mock_stock_data(symbol)
 
 async def get_stock_quote_yahoo(symbol: str) -> StockData:
     """Get stock quote using Yahoo Finance API"""
     try:
-        # Yahoo Finance API endpoint
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol.upper()}"
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
         response = requests.get(url, headers=headers)
         data = response.json()
-        
         print(f"Yahoo Finance API response for {symbol}: {data}")
-        
         if 'chart' in data and 'result' in data['chart'] and data['chart']['result']:
             result = data['chart']['result'][0]
             meta = result.get('meta', {})
-            
             current_price = meta.get('regularMarketPrice', 0)
             previous_close = meta.get('previousClose', current_price)
             change = current_price - previous_close
             change_percent = (change / previous_close * 100) if previous_close > 0 else 0
-            
             return StockData(
                 symbol=symbol.upper(),
                 name=symbol.upper(),
@@ -135,7 +91,7 @@ async def get_stock_quote_yahoo(symbol: str) -> StockData:
         raise e
 
 def get_mock_stock_data(symbol: str) -> StockData:
-    """Get mock stock data as final fallback"""
+    """Get mock stock data as fallback"""
     mock_stock_data = {
         'AAPL': {'price': 175.23, 'change': 2.45, 'change_percent': 1.42, 'name': 'Apple Inc.'},
         'GOOGL': {'price': 142.56, 'change': 0.89, 'change_percent': 0.63, 'name': 'Alphabet Inc.'},
@@ -150,7 +106,6 @@ def get_mock_stock_data(symbol: str) -> StockData:
         '^IXIC': {'price': 14234.56, 'change': -12.34, 'change_percent': -0.09, 'name': 'NASDAQ'},
         '^RUT': {'price': 1890.45, 'change': 15.67, 'change_percent': 0.84, 'name': 'Russell 2000'}
     }
-    
     if symbol.upper() in mock_stock_data:
         stock = mock_stock_data[symbol.upper()]
         return StockData(
@@ -162,44 +117,19 @@ def get_mock_stock_data(symbol: str) -> StockData:
             volume=1000000,
             last_updated=datetime.now()
         )
-    
     raise HTTPException(status_code=404, detail="Stock symbol not found")
 
 @router.post("/quotes")
 async def get_multiple_quotes(symbols: List[str]) -> List[StockData]:
-    """Get quotes for multiple stocks"""
+    """Get quotes for multiple stocks using yfinance"""
     results = []
     for symbol in symbols:
         try:
             stock_data = await get_stock_quote(symbol)
             results.append(stock_data)
         except:
-            # Skip invalid symbols
             continue
     return results
-
-@router.get("/search/{query}")
-async def search_stocks(query: str) -> List[dict]:
-    """Search for stocks by name or symbol using Alpha Vantage"""
-    try:
-        url = f"https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={query}&apikey={ALPHA_VANTAGE_API_KEY}"
-        response = requests.get(url)
-        data = response.json()
-        
-        matches = data.get("bestMatches", [])
-        results = []
-        
-        for match in matches[:5]:  # Limit to 5 results
-            results.append({
-                'symbol': match.get('1. symbol', ''),
-                'name': match.get('2. name', ''),
-                'type': match.get('3. type', ''),
-                'region': match.get('4. region', '')
-            })
-        
-        return results
-    except:
-        return []
 
 @router.get("/trending")
 async def get_trending_stocks() -> List[StockData]:
