@@ -99,16 +99,20 @@ class ApiService {
 
   constructor() {
     this.baseUrl = API_BASE_URL
+    console.log('API Service initialized with base URL:', this.baseUrl)
   }
 
   private async checkBackendHealth(): Promise<boolean> {
     try {
+      console.log('Checking backend health at:', `${this.baseUrl}/health`)
       const response = await fetch(`${this.baseUrl}/health`, { 
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       })
+      console.log('Backend health response:', response.status, response.statusText)
       return response.ok
-    } catch {
+    } catch (error) {
+      console.error('Backend health check failed:', error)
       return false
     }
   }

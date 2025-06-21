@@ -17,7 +17,15 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8080", "https://your-vercel-domain.vercel.app"],
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://localhost:3001", 
+        "http://localhost:8080",
+        "https://wealth-watch-blush.vercel.app",
+        "https://wealth-watch-iov7doq40-jiahongcs-projects.vercel.app",
+        "https://wealth-watch.vercel.app",
+        "https://wealth-watch-*.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

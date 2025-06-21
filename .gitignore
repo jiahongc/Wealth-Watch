@@ -18,8 +18,6 @@ dist/
 .env.production.local
 
 # Python (Backend - exclude from Vercel deployment)
-api/
-requirements.txt
 __pycache__/
 *.py[cod]
 *.class
@@ -105,3 +103,5 @@ public
 # Temporary folders
 tmp/
 temp/
+.vercel
+.env*.local
