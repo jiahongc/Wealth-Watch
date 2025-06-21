@@ -24,8 +24,7 @@ app.add_middleware(
         "https://wealth-watch-j35r7h3or-jiahongcs-projects.vercel.app",
         "https://wealth-watch-o8nf6qpna-jiahongcs-projects.vercel.app",
         "https://wealth-watch-72emrzn32-jiahongcs-projects.vercel.app",
-        # Add your Railway domain here once deployed
-        # Example: "https://your-app-name.railway.app"
+        "https://wealthfolio-production.up.railway.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],

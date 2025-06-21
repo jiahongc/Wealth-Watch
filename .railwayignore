@@ -1,0 +1,14 @@
+# Exclude frontend files from Railway deployment
+app/
+components/
+lib/
+next.config.js
+package.json
+package-lock.json
+postcss.config.js
+tailwind.config.js
+tsconfig.json
+next-env.d.ts
+README.md
+node_modules/
+.next/ 
