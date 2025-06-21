@@ -1,4 +1,5 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const ALPHA_VANTAGE_API_KEY = process.env.NEXT_PUBLIC_ALPHA_VANTAGE_API_KEY || 'demo'
 
 export interface StockData {
   symbol: string
@@ -133,12 +134,30 @@ class ApiService {
   }
 
   async getStockQuote(symbol: string): Promise<StockData> {
-    // Check if backend is available
+    // Try Alpha Vantage if backend is not available
     if (!this.useMockData) {
       const isBackendHealthy = await this.checkBackendHealth()
       if (!isBackendHealthy) {
+        try {
+          const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`
+          const response = await fetch(url)
+          const data = await response.json()
+          const quote = data["Global Quote"]
+          if (quote && quote["05. price"]) {
+            return {
+              symbol: quote["01. symbol"],
+              name: symbol,
+              price: parseFloat(quote["05. price"]),
+              change: parseFloat(quote["09. change"]),
+              change_percent: parseFloat(quote["10. change percent"]),
+              last_updated: new Date().toISOString(),
+            }
+          }
+        } catch (e) {
+          // fallback to mock
+        }
         this.useMockData = true
-        console.log('Backend not available, using mock data')
+        console.log('Backend and Alpha Vantage not available, using mock data')
       }
     }
 
@@ -163,12 +182,22 @@ class ApiService {
   }
 
   async getMultipleQuotes(symbols: string[]): Promise<StockData[]> {
-    // Check if backend is available
+    // Try Alpha Vantage if backend is not available
     if (!this.useMockData) {
       const isBackendHealthy = await this.checkBackendHealth()
       if (!isBackendHealthy) {
+        const results: StockData[] = []
+        for (const symbol of symbols) {
+          try {
+            const quote = await this.getStockQuote(symbol)
+            results.push(quote)
+          } catch {
+            continue
+          }
+        }
+        if (results.length > 0) return results
         this.useMockData = true
-        console.log('Backend not available, using mock data')
+        console.log('Backend and Alpha Vantage not available, using mock data')
       }
     }
 
