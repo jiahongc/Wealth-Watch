@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
 import os
-import sys
 import subprocess
+import sys
 
 def main():
     # Get port from environment variable
     port = os.environ.get('PORT', '8000')
     
-    # Check if uvicorn is available
-    try:
-        import uvicorn
-        print(f"Uvicorn version: {uvicorn.__version__}")
-    except ImportError:
-        print("Uvicorn not found, installing...")
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'uvicorn[standard]'])
+    print(f"Starting WealthFolio API on port {port}")
+    print(f"Python version: {sys.version}")
     
-    # Start the server
-    print(f"Starting server on port {port}")
-    os.system(f"python -m uvicorn main:app --host 0.0.0.0 --port {port}")
+    # Start the server directly with uvicorn
+    cmd = [
+        sys.executable, '-m', 'uvicorn', 
+        'main:app', 
+        '--host', '0.0.0.0', 
+        '--port', port
+    ]
+    
+    print(f"Running command: {' '.join(cmd)}")
+    subprocess.run(cmd)
 
 if __name__ == "__main__":
     main() 
