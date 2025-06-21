@@ -1,4 +1,4 @@
-# Wealth-Watch - Personal Finance Tracker
+# WealthFolio - Personal Finance Tracker
 
 A comprehensive personal finance application built with Next.js 14, featuring real-time stock tracking, budget management, and portfolio analytics.
 
@@ -93,7 +93,7 @@ The frontend works independently with mock data. For real yfinance data:
 ## 📁 Project Structure
 
 ```
-wealth-watch/
+wealthfolio/
 ├── app/                    # Next.js app router pages
 │   ├── dashboard/         # Dashboard pages
 │   └── globals.css       # Global styles
@@ -150,4 +150,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**Wealth-Watch** - Your personal finance companion for building wealth and achieving financial goals.
+**WealthFolio** - Your personal finance companion for building wealth and achieving financial goals.

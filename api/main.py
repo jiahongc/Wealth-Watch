@@ -9,7 +9,7 @@ from typing import Optional
 from routers import auth, assets, stocks, accounts, budget
 
 app = FastAPI(
-    title="Wealth-Watch API",
+    title="WealthFolio API",
     description="Personal finance tracking API",
     version="1.0.0"
 )
@@ -37,7 +37,7 @@ security = HTTPBearer()
 # Health check
 @app.get("/")
 async def root():
-    return {"message": "Wealth-Watch API is running"}
+    return {"message": "WealthFolio API is running"}
 
 @app.get("/health")
 async def health_check():

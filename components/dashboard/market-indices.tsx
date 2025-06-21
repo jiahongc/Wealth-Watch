@@ -1,147 +1,65 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { cn, formatCurrency, formatPercent } from '@/lib/utils'
-import { TrendingUp, TrendingDown, Plus, X, RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { TrendingUp, TrendingDown, BarChart3, RefreshCw, X } from 'lucide-react'
 import { apiService, StockData, HistoricalData } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
-interface WatchlistStock {
-  ticker: string
-  company: string
-  price: number
-  change: number
-  changePercent: number
-  icon: string
+interface IndexData extends StockData {
+  fullName: string
 }
 
-interface WatchlistCardProps {
-  title?: string
-}
-
-export default function WatchlistCard({ title = "Watchlist" }: WatchlistCardProps) {
-  const [watchlistStocks, setWatchlistStocks] = useState<WatchlistStock[]>([
-    {
-      ticker: 'AAPL',
-      company: 'Apple Inc.',
-      price: 175.23,
-      change: 2.45,
-      changePercent: 1.42,
-      icon: '🍎'
-    },
-    {
-      ticker: 'GOOGL',
-      company: 'Alphabet Inc.',
-      price: 142.56,
-      change: 0.89,
-      changePercent: 0.63,
-      icon: '🔍'
-    },
-    {
-      ticker: 'TSLA',
-      company: 'Tesla, Inc.',
-      price: 248.42,
-      change: 5.67,
-      changePercent: 2.34,
-      icon: '🚗'
-    }
-  ])
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [newStockSymbol, setNewStockSymbol] = useState('')
-  const [loading, setLoading] = useState(false)
+export function MarketIndices() {
+  const [indices, setIndices] = useState<IndexData[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedStock, setSelectedStock] = useState<WatchlistStock | null>(null)
+  const [selectedIndex, setSelectedIndex] = useState<IndexData | null>(null)
   const [selectedPeriod, setSelectedPeriod] = useState('3M')
   const [chartData, setChartData] = useState<HistoricalData | null>(null)
   const [chartLoading, setChartLoading] = useState(false)
 
-  const getStockIcon = (symbol: string) => {
-    const icons: { [key: string]: string } = {
-      'AAPL': '🍎',
-      'MSFT': '💻',
-      'GOOGL': '🔍',
-      'TSLA': '🚗',
-      'AMZN': '📦',
-      'NVDA': '🎮',
-      'META': '📘',
-      'NFLX': '📺',
-      'SPOT': '🎵',
-      'ABNB': '🏠'
-    }
-    return icons[symbol] || '📈'
-  }
-
-  const refreshPrices = async () => {
-    setError(null)
-    setLoading(true)
+  const fetchIndexData = async () => {
     try {
-      const symbols = watchlistStocks.map(stock => stock.ticker)
-      if (symbols.length === 0) return
+      setError(null)
+      setLoading(true)
+      // Fetch data for major market indices
+      const symbols = ['^GSPC', '^DJI', '^IXIC', '^RUT']
+      const indexData = await apiService.getMultipleQuotes(symbols)
       
-      const quotes = await apiService.getMultipleQuotes(symbols)
-      
-      setWatchlistStocks(prevStocks => {
-        return prevStocks.map(stock => {
-          const quote = quotes.find(q => q.symbol === stock.ticker)
-          if (quote) {
-            return {
-              ...stock,
-              company: quote.name,
-              price: quote.price,
-              change: quote.change,
-              changePercent: quote.change_percent
-            }
-          }
-          return stock
-        })
+      // Map the API data to include full names
+      const indicesWithNames: IndexData[] = indexData.map(index => {
+        return {
+          ...index,
+          fullName: getIndexFullName(index.symbol)
+        }
       })
+      
+      setIndices(indicesWithNames)
     } catch (error) {
-      console.error('Error refreshing prices:', error)
-      setError('Failed to refresh prices')
+      console.error('Error fetching index data:', error)
+      setError('Failed to fetch market index data')
     } finally {
       setLoading(false)
     }
   }
 
-  const addStock = async () => {
-    if (!newStockSymbol.trim()) return
-    
-    setLoading(true)
-    setError(null)
-    try {
-      const stockQuote = await apiService.getStockQuote(newStockSymbol.trim())
-      
-      const newStock: WatchlistStock = {
-        ticker: stockQuote.symbol,
-        company: stockQuote.name,
-        price: stockQuote.price,
-        change: stockQuote.change,
-        changePercent: stockQuote.change_percent,
-        icon: getStockIcon(stockQuote.symbol)
-      }
-      
-      setWatchlistStocks(prev => [...prev, newStock])
-      setNewStockSymbol('')
-      setShowAddForm(false)
-    } catch (error) {
-      setError('Failed to add stock. Please check the symbol and try again.')
-    } finally {
-      setLoading(false)
+  const getIndexFullName = (symbol: string) => {
+    const names: { [key: string]: string } = {
+      '^GSPC': 'S&P 500',
+      '^DJI': 'Dow Jones',
+      '^IXIC': 'NASDAQ',
+      '^RUT': 'Russell 2000'
     }
+    return names[symbol] || symbol
   }
 
-  const removeStock = (ticker: string) => {
-    setWatchlistStocks(prev => prev.filter(stock => stock.ticker !== ticker))
-  }
-
-  const handleStockClick = (stock: WatchlistStock) => {
-    setSelectedStock(stock)
+  const handleIndexClick = (index: IndexData) => {
+    setSelectedIndex(index)
     setSelectedPeriod('3M')
-    loadChartData(stock.ticker, '3M')
+    loadChartData(index.symbol, '3M')
   }
 
   const loadChartData = async (symbol: string, period: string) => {
@@ -159,8 +77,8 @@ export default function WatchlistCard({ title = "Watchlist" }: WatchlistCardProp
 
   const handlePeriodChange = (period: string) => {
     setSelectedPeriod(period)
-    if (selectedStock) {
-      loadChartData(selectedStock.ticker, period)
+    if (selectedIndex) {
+      loadChartData(selectedIndex.symbol, period)
     }
   }
 
@@ -189,154 +107,125 @@ export default function WatchlistCard({ title = "Watchlist" }: WatchlistCardProp
     return null
   }
 
+  useEffect(() => {
+    fetchIndexData()
+  }, [])
+
+  if (loading) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Market Indices</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <>
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={refreshPrices}
-              disabled={loading}
-              className="h-8 w-8 p-0"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAddForm(!showAddForm)}
-              className="h-8 w-8 p-0"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
+          <CardTitle className="text-sm font-medium">Market Indices</CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={fetchIndexData}
+            disabled={loading}
+            className="h-8 w-8 p-0"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Add Stock Form */}
-          {showAddForm && (
-            <div className="flex items-center space-x-2">
-              <div className="flex-1">
-                <Label htmlFor="new-symbol" className="sr-only">Stock Symbol</Label>
-                <Input
-                  id="new-symbol"
-                  placeholder="Enter stock symbol (e.g., AAPL)"
-                  value={newStockSymbol}
-                  onChange={(e) => setNewStockSymbol(e.target.value.toUpperCase())}
-                  onKeyPress={(e) => e.key === 'Enter' && addStock()}
-                  className="text-sm"
-                />
-              </div>
-              <Button onClick={addStock} size="sm" className="px-3">
-                Add
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowAddForm(false)
-                  setNewStockSymbol('')
-                  setError(null)
-                }}
-                className="px-2"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-
-          {/* Error Message */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
-          {/* Watchlist Stocks */}
-          <div className="space-y-4">
-            {watchlistStocks.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p className="text-sm">No stocks in watchlist</p>
-                <p className="text-xs">Add stocks to start tracking</p>
-              </div>
-            ) : (
-              watchlistStocks.map((stock) => {
-                const isPositive = stock.change >= 0
+          <div className="space-y-3">
+            {indices.length > 0 ? (
+              indices.map((index) => {
+                const isPositive = index.change >= 0
                 
                 return (
                   <div 
-                    key={stock.ticker} 
-                    className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-gray-50 rounded-lg px-2 transition-colors"
-                    onClick={() => handleStockClick(stock)}
+                    key={index.symbol} 
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleIndexClick(index)}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg">
-                        {stock.icon}
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900">{stock.ticker}</div>
-                        <div className="text-sm text-gray-500">{stock.company}</div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <BarChart3 className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{index.fullName}</p>
+                          <p className="text-sm text-gray-500">{index.symbol}</p>
+                        </div>
                       </div>
                     </div>
-
-                    <div className="flex items-center space-x-3">
-                      <div className="text-right">
-                        <div className="font-semibold text-gray-900">
-                          {formatCurrency(stock.price)}
-                        </div>
-                        <div className={cn(
-                          'flex items-center space-x-1 text-sm font-medium',
-                          isPositive ? 'text-green-600' : 'text-red-600'
+                    
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-900">
+                        {formatCurrency(index.price)}
+                      </p>
+                      <div className="flex items-center space-x-1">
+                        {isPositive ? (
+                          <TrendingUp className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <TrendingDown className="h-4 w-4 text-red-600" />
+                        )}
+                        <p className={cn(
+                          "text-sm font-medium",
+                          isPositive ? "text-green-600" : "text-red-600"
                         )}>
-                          {isPositive ? (
-                            <TrendingUp className="h-3 w-3" />
-                          ) : (
-                            <TrendingDown className="h-3 w-3" />
-                          )}
-                          <span>{formatPercent(Math.abs(stock.changePercent))}</span>
-                        </div>
+                          {isPositive ? '+' : ''}{formatCurrency(index.change)} ({isPositive ? '+' : ''}{formatPercent(index.change_percent)})
+                        </p>
                       </div>
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          removeStock(stock.ticker)
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="text-gray-400 hover:text-red-500"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
                 )
               })
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-sm">No market index data available</p>
+              </div>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Stock Chart Popup */}
-      {selectedStock && (
+      {/* Index Chart Popup */}
+      {selectedIndex && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-lg">
-                  {selectedStock.icon}
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <BarChart3 className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">{selectedStock.ticker}</h2>
-                  <p className="text-gray-600">{selectedStock.company}</p>
+                  <h2 className="text-xl font-bold">{selectedIndex.fullName}</h2>
+                  <p className="text-gray-600">{selectedIndex.symbol}</p>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setSelectedStock(null)}
+                onClick={() => setSelectedIndex(null)}
                 className="h-8 w-8 p-0"
               >
                 <X className="h-4 w-4" />

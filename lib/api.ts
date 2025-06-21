@@ -12,6 +12,17 @@ export interface StockData {
   last_updated: string
 }
 
+export interface CryptoData {
+  symbol: string
+  name: string
+  price: number
+  change: number
+  change_percent: number
+  market_cap?: number
+  volume?: number
+  last_updated: string
+}
+
 export interface StockHolding {
   id?: number
   user_id: string
@@ -23,6 +34,53 @@ export interface StockHolding {
   gain_loss: number
   gain_loss_percent: number
   created_at?: string
+}
+
+export interface Account {
+  id?: string
+  user_id: string
+  name: string
+  type: string
+  balance: number
+  currency: string
+  last_updated: string
+}
+
+export interface HoldingsSummary {
+  total_value: number
+  total_gain_loss: number
+  total_gain_loss_percent: number
+  total_invested: number
+  holdings_count: number
+}
+
+export interface AccountsSummary {
+  total_balance: number
+  accounts_count: number
+  accounts: Array<{
+    name: string
+    type: string
+    balance: number
+  }>
+}
+
+export interface HistoricalDataPoint {
+  date: string
+  timestamp: number
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+  day_change: number
+  day_change_percent: number
+  rsi?: number
+}
+
+export interface HistoricalData {
+  symbol: string
+  period: string
+  data: HistoricalDataPoint[]
 }
 
 // Mock stock data for when backend is not available
@@ -224,6 +282,77 @@ class ApiService {
       body: JSON.stringify(symbols),
     })
   }
+
+  async getCryptoQuote(symbol: string): Promise<CryptoData> {
+    try {
+      return this.request<CryptoData>(`/api/stocks/crypto/quote/${symbol.toUpperCase()}`)
+    } catch (error) {
+      console.error('Error fetching crypto data:', error)
+      throw error
+    }
+  }
+
+  async getTopCryptocurrencies(): Promise<CryptoData[]> {
+    try {
+      return this.request<CryptoData[]>('/api/stocks/crypto/top')
+    } catch (error) {
+      console.error('Error fetching top cryptocurrencies:', error)
+      throw error
+    }
+  }
+
+  async getHoldingsSummary(userId: string): Promise<HoldingsSummary> {
+    try {
+      console.log('Fetching holdings summary for user:', userId)
+      console.log('API URL:', `${this.baseUrl}/api/assets/holdings/${userId}/summary`)
+      const result = await this.request<HoldingsSummary>(`/api/assets/holdings/${userId}/summary`)
+      console.log('Holdings summary result:', result)
+      return result
+    } catch (error) {
+      console.error('Error fetching holdings summary:', error)
+      throw error
+    }
+  }
+
+  async getAccountsSummary(userId: string): Promise<AccountsSummary> {
+    try {
+      console.log('Fetching accounts summary for user:', userId)
+      console.log('API URL:', `${this.baseUrl}/api/accounts/${userId}/summary`)
+      const result = await this.request<AccountsSummary>(`/api/accounts/${userId}/summary`)
+      console.log('Accounts summary result:', result)
+      return result
+    } catch (error) {
+      console.error('Error fetching accounts summary:', error)
+      throw error
+    }
+  }
+
+  async getUserHoldings(userId: string): Promise<StockHolding[]> {
+    try {
+      return this.request<StockHolding[]>(`/api/assets/holdings/${userId}`)
+    } catch (error) {
+      console.error('Error fetching user holdings:', error)
+      throw error
+    }
+  }
+
+  async getUserAccounts(userId: string): Promise<Account[]> {
+    try {
+      return await this.request<Account[]>(`/api/accounts/${userId}`)
+    } catch (error) {
+      console.error('Error fetching user accounts:', error)
+      return []
+    }
+  }
+
+  async getStockHistory(symbol: string, period: string = '3M'): Promise<HistoricalData> {
+    try {
+      return await this.request<HistoricalData>(`/api/stocks/history/${symbol}?period=${period}`)
+    } catch (error) {
+      console.error('Error fetching stock history:', error)
+      throw error
+    }
+  }
 }
 
-export const apiService = new ApiService() 
+export const apiService = new ApiService()

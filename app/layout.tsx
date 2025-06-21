@@ -5,7 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Wealth-Watch | Personal Finance Tracker',
+  title: 'WealthFolio | Personal Finance Tracker',
   description: 'Track your net worth, budgets, investments, and retirement goals all in one place.',
   keywords: 'personal finance, wealth tracking, budgeting, investments, net worth',
 }

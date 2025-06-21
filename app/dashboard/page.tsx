@@ -1,29 +1,40 @@
 import { PerformanceChart } from '@/components/dashboard/performance-chart'
-import { DividendChart } from '@/components/dashboard/dividend-chart'
-import { WatchlistCard } from '@/components/dashboard/watchlist-card'
+import WatchlistCard from '@/components/dashboard/watchlist-card'
+import { PortfolioOverview } from '@/components/dashboard/portfolio-overview'
+import { MarketIndices } from '@/components/dashboard/market-indices'
+import { Cryptocurrencies } from '@/components/dashboard/cryptocurrencies'
 
 export default function DashboardPage() {
+  // Mock portfolio data - in a real app, this would come from your portfolio state
+  const portfolioData = {
+    totalValue: 125000,
+    totalGainLoss: 8500,
+    gainLossPercent: 7.3,
+    totalInvested: 116500
+  }
+
   return (
     <div className="p-6 space-y-6">
-      {/* Charts Row */}
+      {/* First Row - Portfolio Overview and Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div>
+          <PortfolioOverview
+            totalValue={portfolioData.totalValue}
+            totalGainLoss={portfolioData.totalGainLoss}
+            gainLossPercent={portfolioData.gainLossPercent}
+            totalInvested={portfolioData.totalInvested}
+          />
+        </div>
         <div className="lg:col-span-2">
           <PerformanceChart />
         </div>
-        <div>
-          <DividendChart />
-        </div>
       </div>
 
-      {/* Bottom Row - Watchlist and Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Second Row - Watchlist, Market Indices, and Cryptocurrencies */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <WatchlistCard />
-        <div className="bg-white rounded-lg border border-gray-200 p-6 flex items-center justify-center">
-          <div className="text-center text-gray-500">
-            <p className="text-lg mb-2">Portfolio Overview</p>
-            <p className="text-sm">Track your investments and performance</p>
-          </div>
-        </div>
+        <MarketIndices />
+        <Cryptocurrencies />
       </div>
     </div>
   )

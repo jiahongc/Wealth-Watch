@@ -10,7 +10,7 @@ export default function HomePage() {
         <nav className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <TrendingUp className="h-8 w-8 text-blue-600" />
-            <span className="text-2xl font-bold text-gray-900">Wealth-Watch</span>
+            <span className="text-2xl font-bold text-gray-900">WealthFolio</span>
           </div>
           <div className="flex items-center space-x-4">
             <Button variant="ghost" asChild>
@@ -84,7 +84,7 @@ export default function HomePage() {
       <footer className="border-t bg-white mt-20">
         <div className="container mx-auto px-6 py-8">
           <div className="text-center text-gray-600">
-            <p>&copy; 2024 Wealth-Watch. Built for your financial success.</p>
+            <p>&copy; 2024 WealthFolio. Built for your financial success.</p>
           </div>
         </div>
       </footer>

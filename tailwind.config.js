@@ -50,7 +50,7 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Custom blue accent colors for Wealth-Watch
+        // Custom blue accent colors for WealthFolio
         blue: {
           50: '#eff6ff',
           100: '#dbeafe',
