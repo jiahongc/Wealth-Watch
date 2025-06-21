@@ -1,0 +1,25 @@
+# Backend files to exclude from Vercel deployment
+api/
+requirements.txt
+runtime.txt
+Procfile
+start.py
+railway.json
+railway.toml
+routers/
+
+# Python files
+*.py
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Backend dependencies
+node_modules/
