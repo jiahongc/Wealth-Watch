@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 import random
 import time
 import yfinance as yf
-import talib
 import pandas as pd
+import numpy as np
 
 router = APIRouter()
 
@@ -171,7 +171,7 @@ async def get_stock_history(symbol: str, period: str = "3mo") -> dict:
             raise Exception("No data found for symbol")
         
         # Calculate RSI
-        data['RSI'] = talib.RSI(data['Close'].values, timeperiod=14)
+        data['RSI'] = calculate_rsi(data['Close'].values)
         
         # Convert to format suitable for charts
         data_points = []
@@ -388,4 +388,33 @@ async def get_user_holdings(user_id: str) -> List[StockHolding]:
     """Get all stock holdings for a user"""
     # In production, this would fetch from database
     # For now, return empty list
-    return [] 
+    return []
+
+def calculate_rsi(prices, period=14):
+    """Calculate RSI using simple moving average method"""
+    if len(prices) < period + 1:
+        return [None] * len(prices)
+    
+    deltas = np.diff(prices)
+    gains = np.where(deltas > 0, deltas, 0)
+    losses = np.where(deltas < 0, -deltas, 0)
+    
+    avg_gains = np.zeros_like(prices)
+    avg_losses = np.zeros_like(prices)
+    
+    # Calculate initial averages
+    avg_gains[period] = np.mean(gains[:period])
+    avg_losses[period] = np.mean(losses[:period])
+    
+    # Calculate subsequent averages using smoothing
+    for i in range(period + 1, len(prices)):
+        avg_gains[i] = (avg_gains[i-1] * (period-1) + gains[i-1]) / period
+        avg_losses[i] = (avg_losses[i-1] * (period-1) + losses[i-1]) / period
+    
+    rs = avg_gains / avg_losses
+    rsi = 100 - (100 / (1 + rs))
+    
+    # Set first period values to None
+    rsi[:period] = None
+    
+    return rsi 

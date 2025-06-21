@@ -21,7 +21,10 @@ app.add_middleware(
         "http://localhost:3000", 
         "http://localhost:3001", 
         "http://localhost:8080",
-        "https://wealth-watch-j35r7h3or-jiahongcs-projects.vercel.app"
+        "https://wealth-watch-j35r7h3or-jiahongcs-projects.vercel.app",
+        "https://wealth-watch-o8nf6qpna-jiahongcs-projects.vercel.app",
+        # Add your Railway domain here once deployed
+        # Example: "https://your-app-name.railway.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
